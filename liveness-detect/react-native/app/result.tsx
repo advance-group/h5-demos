@@ -1,9 +1,9 @@
 import { View, Text, StyleSheet } from 'react-native';
 
-export default function PailPage() {
+export default function VerificationResultPage() {
   return (
     <View style={styles.container}>
-      <Text>Liveness Failed</Text>
+      <Text>Verification result</Text>
     </View>
   );
 }

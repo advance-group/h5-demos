@@ -4,10 +4,10 @@ import { View, Text, StyleSheet } from 'react-native';
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.heading2}>React Native Home Page</Text>
+      <Text style={styles.heading2}>Page 1 (OCR)</Text>
       <Text></Text>
       <Text></Text>
-      <Link style={styles.link} href="/webview/liveness-detect">Go to liveness-detect</Link>
+      <Link style={styles.link} href={{ pathname: '/webview/liveness-detect', params: { tokenUrl: "YOUR_LINVESS_URL"  } }}>Go to liveness-detect</Link>
     </View>
   );
 }

@@ -1,10 +1,9 @@
 import { WebView } from 'react-native-webview';
 import { Camera } from "expo-camera";
-import { useRouter } from 'expo-router';
-
+import { useLocalSearchParams, useRouter } from 'expo-router';
 export default function LivenessDetectScreen() {
   const router = useRouter();
-
+  const { tokenUrl } = useLocalSearchParams();
   const requestCameraPermission = async () => {
     try {
       const result = await Camera.requestCameraPermissionsAsync();
@@ -20,7 +19,7 @@ export default function LivenessDetectScreen() {
       allowsInlineMediaPlayback={true}
       mediaPlaybackRequiresUserAction={false} 
       source={{
-        uri: "YOUR_LIVENESS_DETECTION_URL",
+        uri: tokenUrl as string,
       }}
       style={{ flex: 1 }}
       onShouldStartLoadWithRequest={(navState) => {
@@ -37,12 +36,17 @@ export default function LivenessDetectScreen() {
        // when liveness detection is done, it will redirect to returnUrl or failedReturnUrl, you can handle it here
         const urlData = new URL(navState.url);
         if (urlData.hostname === 'www.example-success.com') {
-          router.navigate('/');
+          router.navigate('result');
           // router.back();
           return false
         } else if (urlData.hostname === 'www.example-fail.com') {
-          router.navigate('/');
-          // router.back();
+          // go to retry page
+          router.replace({
+            pathname: 'webview/liveness-detect',
+            params: {
+              tokenUrl: 'YOUR_LINVESS_URL' 
+            }
+          });
           return false
         }
         return true;
