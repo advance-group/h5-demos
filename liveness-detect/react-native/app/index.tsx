@@ -4,7 +4,7 @@ import { View, Text, StyleSheet } from 'react-native';
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
-      <Text style={styles.heading2}>Home Page</Text>
+      <Text style={styles.heading2}>React Native Home Page</Text>
       <Text></Text>
       <Text></Text>
       <Link style={styles.link} href="/webview/liveness-detect">Go to liveness-detect</Link>

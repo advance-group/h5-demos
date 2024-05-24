@@ -37,10 +37,12 @@ export default function LivenessDetectScreen() {
        // when liveness detection is done, it will redirect to returnUrl or failedReturnUrl, you can handle it here
         const urlData = new URL(navState.url);
         if (urlData.hostname === 'www.example-success.com') {
-          router.navigate('success-page');
+          router.navigate('/');
+          // router.back();
           return false
         } else if (urlData.hostname === 'www.example-fail.com') {
-          router.navigate('fail-page');
+          router.navigate('/');
+          // router.back();
           return false
         }
         return true;
