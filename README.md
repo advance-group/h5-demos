@@ -1,3 +1,3 @@
 # Demos
 
-This is a project for the demo collection.
+This is a project for AAI liveness demo collection.

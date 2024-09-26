@@ -1,0 +1,1 @@
+export { default as AAILivenessIframe, destroyAAILivenessIframe } from './AAILivenessIframe';

@@ -1,0 +1,21 @@
+{
+  "name": "aai-liveness-iframe",
+  "version": "1.0.0",
+  "main": "dist/aai-liveness-iframe.cjs.js",
+  "module": "dist/aai-liveness-iframe.esm.js",
+  "types": "dist/index.d.ts",
+  "scripts": {
+    "build": "vite build",
+    "demo": "vite --config vite.demo.config.ts"
+  },
+  "dependencies": {
+    "react": "^18.0.0",
+    "react-dom": "^18.3.1"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-react": "^3.0.0",
+    "typescript": "^5.0.0",
+    "vite": "^4.0.0",
+    "vite-plugin-mkcert": "^1.16.0"
+  }
+}
