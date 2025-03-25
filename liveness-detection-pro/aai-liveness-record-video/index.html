@@ -1,0 +1,316 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no" />
+    <title>AAI Liveness Iframe Demo Record Video</title>
+    <style>
+        body, html {
+            margin: 0;
+            padding: 0;
+            height: 100vh;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            overflow: hidden;
+        }
+
+        .main-container {
+            display: flex;
+            height: 100%;
+            width: 100%;
+        }
+
+        .input-section {
+            position: absolute;
+            top: 20px;
+            left: 20px;
+            width: 300px;
+            z-index: 10;
+        }
+
+        .input-group {
+            margin-bottom: 1rem;
+        }
+
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .iframe-section {
+            flex: 1;
+            background: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            position: relative;
+        }
+
+        iframe {
+            width: 100%;
+            height: 100%;
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        .media-section {
+            flex: 1;
+            background: #f0f0f0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        .media-content {
+            max-width: 100%;
+            max-height: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .image-thumbnails {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 10px;
+            justify-content: center;
+            margin-top: 20px;
+        }
+
+        .thumbnail {
+            max-width: 150px;
+            max-height: 150px;
+            object-fit: cover;
+            border-radius: 5px;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+
+        .thumbnail:hover {
+            transform: scale(1.05);
+        }
+
+        #displayMedia {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 10px;
+        }
+
+        #displayImage {
+            max-width: 100%;
+            max-height: 70vh;
+            border-radius: 10px;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .placeholder-text {
+            color: #888;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .error-text {
+            color: red;
+            text-align: center;
+            padding: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="input-section">
+        <div class="input-group">
+            <input type="text" id="livenessUrl" placeholder="Input Liveness URL" />
+        </div>
+        <button onclick="navigateToLivenessUrl()">Open</button>
+    </div>
+
+    <div class="main-container">
+        <div class="iframe-section">
+            <iframe id="livenessIframe" allow="camera;autoplay;fullscreen;" allowfullscreen></iframe>
+        </div>
+        
+        <div class="media-section">
+            <div class="placeholder-text">
+                Media will be displayed here after completing the liveness check
+            </div>
+            <div class="media-content hidden" id="mediaContent">
+                <div class="error-text hidden" id="errorText"></div>
+                <video id="displayMedia" controls class="hidden"></video>
+                <img id="displayImage" class="hidden" />
+                <div id="imageContainer" class="image-thumbnails"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const mediaContent = document.getElementById('mediaContent');
+        const placeholderText = document.querySelector('.placeholder-text');
+        const errorText = document.getElementById('errorText');
+        const displayVideo = document.getElementById('displayMedia');
+        const displayImage = document.getElementById('displayImage');
+        const imageContainer = document.getElementById('imageContainer');
+
+        let messageHandler = null;
+
+        window.addEventListener("message", (event) => {
+            console.log("Received message:", event);
+            
+            if (messageHandler && event.data) {
+                messageHandler(event.data);
+                messageHandler = null;
+            }
+        });
+
+        function navigateToLivenessUrl() {
+            const inputUrl = document.getElementById("livenessUrl").value;
+            if (inputUrl) {
+                try {
+                    const { hostname } = new URL(inputUrl);
+                    const isAllowed = /advai|sandbox|advance/.test(hostname);
+                    
+                    messageHandler = (fullData) => {
+                        // Check for the specific event key
+                        if (fullData.eventKey === "video-record-finished") {
+                            const data = fullData.data;
+                            
+                            if (data.type === 'video') {
+                                handleVideoResponse(data.values);
+                            } else if (data.type === 'image') {
+                                handleImageResponse(data.values);
+                            }
+                        }
+                    };
+
+                    document.getElementById("livenessIframe").src = inputUrl;
+                    placeholderText.classList.add('hidden');
+                    errorText.classList.add('hidden');
+                    mediaContent.classList.remove('hidden');
+                } catch (err) {
+                    alert("Invalid URL: " + err.message);
+                }
+            } else {
+                alert("Please enter a Liveness URL");
+            }
+        }
+
+        async function fetchBlobFromUrl(url) {
+            try {
+                const response = await fetch(url);
+                return await response.blob();
+            } catch (error) {
+                console.error("Error fetching blob:", error);
+                return null;
+            }
+        }
+
+        function handleVideoResponse(values) {
+            if (values && values.length > 0) {
+                // If values is an array of URLs
+                if (typeof values[0] === 'string') {
+                    fetchBlobFromUrl(values[0]).then(blob => {
+                        if (blob) {
+                            const videoUrl = URL.createObjectURL(blob);
+                            displayVideo.src = videoUrl;
+                            displayVideo.classList.remove('hidden');
+                            displayImage.classList.add('hidden');
+                            imageContainer.innerHTML = ''; 
+                        } else {
+                            showError('Failed to load video');
+                        }
+                    });
+                } 
+                // If values is an array of Blobs
+                else if (values[0] instanceof Blob) {
+                    const videoUrl = URL.createObjectURL(values[0]);
+                    displayVideo.src = videoUrl;
+                    displayVideo.classList.remove('hidden');
+                    displayImage.classList.add('hidden');
+                    imageContainer.innerHTML = ''; 
+                }
+                else {
+                    showError('Invalid video data');
+                }
+            } else {
+                showError('No video data received');
+            }
+        }
+
+        function handleImageResponse(values) {
+            if (values && values.length > 0) {
+                // If values is an array of URLs
+                if (typeof values[0] === 'string') {
+                    Promise.all(values.map(fetchBlobFromUrl)).then(blobs => {
+                        displayVideo.classList.add('hidden');
+                        displayImage.classList.add('hidden');
+                        imageContainer.innerHTML = ''; 
+
+                        blobs.forEach((blob, index) => {
+                            if (blob) {
+                                const imageUrl = URL.createObjectURL(blob);
+                                const thumbnailImg = document.createElement('img');
+                                thumbnailImg.src = imageUrl;
+                                thumbnailImg.classList.add('thumbnail');
+                                thumbnailImg.onclick = () => {
+                                    displayImage.src = imageUrl;
+                                    displayImage.classList.remove('hidden');
+                                };
+                                imageContainer.appendChild(thumbnailImg);
+                            }
+                        });
+                    });
+                } 
+                // If values is an array of Blobs
+                else if (values[0] instanceof Blob) {
+                    displayVideo.classList.add('hidden');
+                    displayImage.classList.add('hidden');
+                    imageContainer.innerHTML = ''; 
+
+                    values.forEach((blob, index) => {
+                        const imageUrl = URL.createObjectURL(blob);
+                        const thumbnailImg = document.createElement('img');
+                        thumbnailImg.src = imageUrl;
+                        thumbnailImg.classList.add('thumbnail');
+                        thumbnailImg.onclick = () => {
+                            displayImage.src = imageUrl;
+                            displayImage.classList.remove('hidden');
+                        };
+                        imageContainer.appendChild(thumbnailImg);
+                    });
+                }
+                else {
+                    showError('Invalid image data');
+                }
+            } else {
+                showError('No image data received');
+            }
+        }
+
+        function showError(message) {
+            errorText.textContent = message;
+            errorText.classList.remove('hidden');
+            displayVideo.classList.add('hidden');
+            displayImage.classList.add('hidden');
+            imageContainer.innerHTML = '';
+        }
+
+        // Add event listener for Enter key press
+        document.getElementById("livenessUrl").addEventListener("keyup", function(event) {
+            if (event.key === "Enter") {
+                navigateToLivenessUrl();
+            }
+        });
+    </script>
+</body>
+</html>
