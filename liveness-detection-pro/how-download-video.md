@@ -32,6 +32,8 @@ window.addEventListener("message", (event) => {
 
 ### Message Data Structure
 
+> When the user's browser does not support **window.MediaRecorder** returns the image type
+
 The message received from the iframe has the following structure:
 
 ```javascript
